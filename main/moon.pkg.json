@@ -1,0 +1,8 @@
+{
+  "import": ["mizchi/hello/lib"],
+  "link": {
+    "wasm-gc": {
+      "exports": ["run"]
+    }
+  }
+}
