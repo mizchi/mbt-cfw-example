@@ -73,6 +73,10 @@ fn distance(self: Point, other: Point) -> Double {
 - 問題
   - async/await やジェネレータのような非同期・継続がない
 - => JSPI と組み合わせればいけるのでは？
+  - (結論から言うと Workers では動いてない)
+
+コード全体
+https://github.com/mizchi/mbt-cfw-example
 
 ----
 
