@@ -1,8 +1,9 @@
 {
-  "import": ["mizchi/hello/lib"],
+  "import": [],
   "link": {
     "wasm-gc": {
-      "exports": ["run"]
+      "export-memory-name": "memory",
+      "exports": ["run", "handle"]
     }
   }
 }

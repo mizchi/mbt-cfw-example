@@ -21,30 +21,18 @@ const { promising, Suspending } = WebAssembly as any;
 
 const imports = {
   js: {
-    fetch: new Suspending(async (id: number) => {
-      const res = await fetch(`https://jsonplaceholder.typicode.com/todos/${id}`, {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
-      const data = await res.json();
-      return data.userId;
-    }),
-    fetch1: new Suspending(async (id: number) => {
-      const res = await fetch(`https://jsonplaceholder.typicode.com/todos/${id}`, {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
-      const data = await res.json();
+    fetch: new Suspending(async (len: number) => {
+      // read memory with offset
       const mem = new Uint8Array(memory.buffer);
-      const offset = mem.byteLength;
+      const req = JSON.parse(new TextDecoder().decode(mem.slice(0, len)));
+      const res = await fetch(req.url, req.init);
+      // write memory with response
+      const data = await res.json();
       const bytes = new TextEncoder().encode(JSON.stringify(data));
-      mem.set(bytes, offset);
-      return offset;
+      mem.set(bytes);
+      return bytes.byteLength;
     }),
+
   },
   spectest: { print_char: log },
   js_string: {
@@ -59,12 +47,26 @@ const imports = {
   }
 };
 
-const { instance: { exports } } = await WebAssembly.instantiateStreaming(
+const obj = await WebAssembly.instantiateStreaming(
   fetch(new URL("./target/wasm-gc/release/build/main/main.wasm", import.meta.url)),
   imports,
 );
-memory = exports['moonbit.memory'] as WebAssembly.Memory;
+
+const exports = obj.instance.exports as any;
+memory = exports.memory as WebAssembly.Memory;
 // @ts-ignore
 const run = promising(exports.run);
-run();
+await run();
 flush();
+
+// handle
+const responseLen = exports.handle();
+const mem = new Uint8Array(memory.buffer);
+const res = JSON.parse(new TextDecoder().decode(mem.slice(0, responseLen)));
+console.log(new Response(res.body, res.init));
+
+// export function handle() {
+//   return new Response("Hello World", {
+//     headers: { "content-type": "text/plain" },
+//   });
+// }
